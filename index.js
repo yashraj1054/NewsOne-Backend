@@ -40,29 +40,27 @@ mongoose.set("strictQuery", true);
 //   })
 //   .catch((error) => console.log("MongoDB error ➜", error));
 
-
 let isConnected = false;
 
 async function connectToMongoDB() {
+  if (isConnected) return;
+
   try {
-    await mongoose.connect(MONGODB_URL).then(() => {
+    await mongoose.connect(MONGODB_URL);
+    isConnected = true;
     console.log("DB Connected Successfully! 🚀");
-    createInitialAdmin();
-  })
+    await createInitialAdmin();
   } catch (error) {
     console.error("MongoDB error :", error);
   }
-  
 }
 
-
-app.use((req,res,next)=>{
-  if(!isConnected){
-    connectToMongoDB();
+app.use(async (req, res, next) => {
+  if (!isConnected) {
+    await connectToMongoDB();
   }
   next();
-})
-
+});
 
 
 
@@ -100,10 +98,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/admin", adminRoutes);
 app.use("/api/editor", editorRoutes); 
 app.use("/api/public", publicRoutes);
 
 
-module.exports = app
+export default app;
